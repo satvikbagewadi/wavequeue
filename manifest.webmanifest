@@ -1,0 +1,10 @@
+{
+  "name": "WaveQueue MP3 Downloader",
+  "short_name": "WaveQueue",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "description": "Queue links for local 128 kbps MP3 conversion.",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

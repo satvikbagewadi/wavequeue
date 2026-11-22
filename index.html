@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d1117" />
+    <meta name="description" content="Queue YouTube links for local MP3 conversion." />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>WaveQueue</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="WaveQueue home"><span class="brand-mark">◒</span> WaveQueue</a>
+        <span class="status-pill"><span class="status-dot"></span> Local mode</span>
+      </header>
+
+      <section class="hero">
+        <p class="eyebrow">LOCAL AUDIO QUEUE</p>
+        <h1>Turn your queue into<br /><em>clean MP3s.</em></h1>
+        <p class="lede">Paste video links, set your quality, and let your local downloader handle the rest.</p>
+      </section>
+
+      <section class="workspace" aria-label="Download queue">
+        <div class="panel input-panel">
+          <div class="panel-heading"><div><span class="step">01</span><h2>Add links</h2></div><span class="hint">One URL per line</span></div>
+          <textarea id="links" spellcheck="false" placeholder="https://www.youtube.com/watch?v=...\nhttps://youtu.be/..." aria-label="Video URLs"></textarea>
+          <div class="input-footer"><span id="link-count">0 links ready</span><button class="button secondary" id="clear-btn">Clear</button></div>
+        </div>
+
+        <div class="panel settings-panel">
+          <div class="panel-heading"><div><span class="step">02</span><h2>Output</h2></div></div>
+          <div class="setting-row"><span>Format</span><strong>MP3</strong></div>
+          <div class="setting-row"><span>Bitrate</span><strong>128 kbps</strong></div>
+          <div class="setting-row"><span>Destination</span><strong>downloads/</strong></div>
+          <button class="button primary" id="download-btn">Download all <span>↗</span></button>
+          <p class="microcopy">Downloads are processed locally using yt-dlp and FFmpeg.</p>
+        </div>
+      </section>
+
+      <section class="queue-section">
+        <div class="queue-heading"><h2>Queue <span id="queue-count">0</span></h2><span id="queue-status">Waiting for links</span></div>
+        <div id="queue" class="queue empty"><div class="empty-icon">⌁</div><p>Your links will appear here.</p></div>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <footer><span>App by Satvik Bagewadi with Codex</span><span>Use only content you have permission to download.</span></footer>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: wavequeue
+    runtime: docker
+    plan: free
+    healthCheckPath: /
