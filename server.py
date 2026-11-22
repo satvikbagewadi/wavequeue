@@ -9,6 +9,20 @@ import yt_dlp
 
 ROOT = Path(__file__).resolve().parent
 OUTPUT_DIR = ROOT / 'downloads'
+USER_DOWNLOADS = Path.home() / 'Downloads'
+
+def copy_to_user_downloads(filename):
+    source = OUTPUT_DIR / filename
+    if not source.is_file():
+        return
+    USER_DOWNLOADS.mkdir(exist_ok=True)
+    target = USER_DOWNLOADS / filename
+    stem, suffix = target.stem, target.suffix
+    counter = 1
+    while target.exists():
+        target = USER_DOWNLOADS / f'{stem} ({counter}){suffix}'
+        counter += 1
+    shutil.copy2(source, target)
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -75,6 +89,8 @@ class Handler(SimpleHTTPRequestHandler):
         # any recently generated MP3s as a safe fallback.
         if not downloaded:
             downloaded = [path.name for path in OUTPUT_DIR.glob('*.mp3') if path.name not in existing_mp3]
+        for filename in sorted(set(downloaded)):
+            copy_to_user_downloads(filename)
         body = json.dumps({'count': len(downloaded), 'files': sorted(set(downloaded))}).encode()
         self.send_response(200)
         self._cors()
