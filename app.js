@@ -4,6 +4,21 @@ const linkCount = document.querySelector('#link-count');
 const queueCount = document.querySelector('#queue-count');
 const queueStatus = document.querySelector('#queue-status');
 const toast = document.querySelector('#toast');
+const localBackend = 'http://127.0.0.1:8000';
+let backendBase = '';
+
+async function findBackend() {
+  try {
+    const response = await fetch(`${localBackend}/api/health`, { signal: AbortSignal.timeout(900) });
+    if (response.ok) {
+      backendBase = localBackend;
+      document.querySelector('.status-pill').innerHTML = '<span class="status-dot"></span> Local bridge connected';
+      return;
+    }
+  } catch (_) { /* The local bridge is optional. */ }
+  backendBase = '';
+  document.querySelector('.status-pill').innerHTML = '<span class="status-dot offline"></span> Start local bridge';
+}
 
 function links() {
   return [...new Set(linksInput.value.split(/\r?\n/).map(x => x.trim()).filter(x => x && !x.startsWith('#')))]
@@ -28,7 +43,10 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
   if (!items.length) return showToast('Add at least one valid URL first.');
   const states = Object.fromEntries(items.map((_, i) => [i, 'Queued'])); renderQueue(states); queueStatus.textContent = 'Processing locally…';
   try {
-    const response = await fetch('/api/download', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls: items}) });
+    if (!backendBase && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      throw new Error('Start the local bridge first: set YTDLP_BROWSER=chrome (or edge), then run server.py.');
+    }
+    const response = await fetch(`${backendBase}/api/download`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls: items}) });
     if (!response.ok) {
       let message = await response.text();
       try { message = JSON.parse(message).error || message; } catch (_) { /* Keep the server text. */ }
@@ -39,7 +57,7 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
     // their normal Downloads location instead of treating it as media.
     for (const file of result.files || []) {
       const link = document.createElement('a');
-      link.href = `/api/file?name=${encodeURIComponent(file)}`;
+      link.href = `${backendBase}/api/file?name=${encodeURIComponent(file)}`;
       link.download = file;
       document.body.appendChild(link); link.click(); link.remove();
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -48,4 +66,5 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
   } catch (error) { Object.keys(states).forEach(i => states[i] = 'Failed'); renderQueue(states); queueStatus.textContent = 'Download failed'; showToast(error.message || 'The downloader could not complete the request.'); console.error(error); }
 });
 renderQueue();
+findBackend();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');

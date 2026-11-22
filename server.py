@@ -14,6 +14,22 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
+    def _cors(self):
+        origin = self.headers.get('Origin')
+        if origin in {'https://wavequeue.onrender.com', 'http://localhost:8000', 'http://127.0.0.1:8000'}:
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+
+    def do_OPTIONS(self):
+        if self.path.startswith('/api/'):
+            self.send_response(204)
+            self._cors()
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.end_headers()
+            return
+        self.send_error(404)
+
     def do_POST(self):
         if self.path != '/api/download':
             self.send_error(404)
@@ -49,6 +65,7 @@ class Handler(SimpleHTTPRequestHandler):
                 message = 'YouTube requires browser authentication for this request. Run the local app with YTDLP_BROWSER=chrome (or edge), rather than uploading browser cookies to the hosted service.'
             body = json.dumps({'error': message}).encode()
             self.send_response(502)
+            self._cors()
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
@@ -60,12 +77,22 @@ class Handler(SimpleHTTPRequestHandler):
             downloaded = [path.name for path in OUTPUT_DIR.glob('*.mp3') if path.name not in existing_mp3]
         body = json.dumps({'count': len(downloaded), 'files': sorted(set(downloaded))}).encode()
         self.send_response(200)
+        self._cors()
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.path == '/api/health':
+            body = json.dumps({'ok': True, 'service': 'wavequeue-local'}).encode()
+            self.send_response(200)
+            self._cors()
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if not self.path.startswith('/api/file?'):
             return super().do_GET()
         name = unquote(parse_qs(urlparse(self.path).query).get('name', [''])[0])
@@ -75,6 +102,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
         data = requested.read_bytes()
         self.send_response(200)
+        self._cors()
         self.send_header('Content-Type', 'audio/mpeg')
         self.send_header('Content-Disposition', f'attachment; filename="{requested.name}"')
         self.send_header('Content-Length', str(len(data)))
