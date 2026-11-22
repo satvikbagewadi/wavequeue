@@ -28,6 +28,7 @@ class Handler(SimpleHTTPRequestHandler):
         OUTPUT_DIR.mkdir(exist_ok=True)
         existing_mp3 = {path.name for path in OUTPUT_DIR.glob('*.mp3')}
         downloaded = []
+        browser = os.environ.get('YTDLP_BROWSER', '').strip().lower()
 
         def on_postprocess(info):
             if info.get('status') == 'finished' and info.get('postprocessor') == 'FFmpegExtractAudio':
@@ -36,9 +37,23 @@ class Handler(SimpleHTTPRequestHandler):
                     downloaded.append(filepath.name)
 
         options = {'format': 'bestaudio/best', 'outtmpl': str(OUTPUT_DIR / '%(title)s.%(ext)s'), 'noplaylist': True, 'ffmpeg_location': ffmpeg, 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '128'}], 'postprocessor_hooks': [on_postprocess]}
-        with yt_dlp.YoutubeDL(options) as downloader:
-            for url in urls:
-                downloader.download([url])
+        if browser in {'chrome', 'chromium', 'edge', 'firefox', 'brave', 'opera', 'vivaldi'}:
+            options['cookiesfrombrowser'] = (browser,)
+        try:
+            with yt_dlp.YoutubeDL(options) as downloader:
+                for url in urls:
+                    downloader.download([url])
+        except yt_dlp.utils.DownloadError as error:
+            message = str(error)
+            if 'not a bot' in message.lower() or 'sign in to confirm' in message.lower():
+                message = 'YouTube requires browser authentication for this request. Run the local app with YTDLP_BROWSER=chrome (or edge), rather than uploading browser cookies to the hosted service.'
+            body = json.dumps({'error': message}).encode()
+            self.send_response(502)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         # Some yt-dlp versions expose the final path differently, so include
         # any recently generated MP3s as a safe fallback.
         if not downloaded:

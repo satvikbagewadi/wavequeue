@@ -29,7 +29,11 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
   const states = Object.fromEntries(items.map((_, i) => [i, 'Queued'])); renderQueue(states); queueStatus.textContent = 'Processing locally…';
   try {
     const response = await fetch('/api/download', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls: items}) });
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      let message = await response.text();
+      try { message = JSON.parse(message).error || message; } catch (_) { /* Keep the server text. */ }
+      throw new Error(message);
+    }
     const result = await response.json();
     // Use a native attachment URL so desktop and mobile browsers save it to
     // their normal Downloads location instead of treating it as media.
@@ -41,7 +45,7 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
     Object.keys(states).forEach(i => states[i] = 'Done'); renderQueue(states); queueStatus.textContent = 'All downloads complete'; showToast(`Downloaded ${result.count || items.length} MP3 file(s) to your browser Downloads folder.`);
-  } catch (error) { Object.keys(states).forEach(i => states[i] = 'Backend needed'); renderQueue(states); queueStatus.textContent = 'Downloader unavailable'; showToast('Start server.py, then try again.'); console.error(error); }
+  } catch (error) { Object.keys(states).forEach(i => states[i] = 'Failed'); renderQueue(states); queueStatus.textContent = 'Download failed'; showToast(error.message || 'The downloader could not complete the request.'); console.error(error); }
 });
 renderQueue();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
