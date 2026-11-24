@@ -68,3 +68,20 @@ renderQueue();
 findBackend();
 setInterval(findBackend, 3000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+const bridgeButton = document.querySelector('#bridge-btn');
+if (bridgeButton) {
+  bridgeButton.addEventListener('click', async () => {
+    if (await findBackend()) {
+      showToast('Local bridge is already running.');
+      return;
+    }
+    const launcher = document.createElement('a');
+    launcher.href = 'run_pwa.bat';
+    launcher.download = 'run_pwa.bat';
+    document.body.appendChild(launcher);
+    launcher.click();
+    launcher.remove();
+    showToast('Launcher downloaded. Double-click run_pwa.bat, then return here.');
+  });
+}
