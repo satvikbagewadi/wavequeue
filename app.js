@@ -13,11 +13,12 @@ async function findBackend() {
     if (response.ok) {
       backendBase = localBackend;
       document.querySelector('.status-pill').innerHTML = '<span class="status-dot"></span> Local bridge connected';
-      return;
+      return true;
     }
   } catch (_) { /* The local bridge is optional. */ }
   backendBase = '';
-  document.querySelector('.status-pill').innerHTML = '<span class="status-dot offline"></span> Start local bridge';
+  document.querySelector('.status-pill').innerHTML = '<span class="status-dot"></span> Cloud mode';
+  return false;
 }
 
 function links() {
@@ -43,9 +44,7 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
   if (!items.length) return showToast('Add at least one valid URL first.');
   const states = Object.fromEntries(items.map((_, i) => [i, 'Queued'])); renderQueue(states); queueStatus.textContent = 'Processing locally…';
   try {
-    if (!backendBase && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-      throw new Error('Start the local bridge first: set YTDLP_BROWSER=chrome (or edge), then run server.py.');
-    }
+    await findBackend();
     const response = await fetch(`${backendBase}/api/download`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({urls: items}) });
     if (!response.ok) {
       let message = await response.text();
@@ -67,4 +66,5 @@ document.querySelector('#download-btn').addEventListener('click', async () => {
 });
 renderQueue();
 findBackend();
+setInterval(findBackend, 3000);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
