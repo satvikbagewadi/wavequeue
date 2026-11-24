@@ -26,7 +26,7 @@
       <section class="workspace" aria-label="Download queue">
         <div class="panel input-panel">
           <div class="panel-heading"><div><span class="step">01</span><h2>Add links</h2></div><span class="hint">One URL per line</span></div>
-          <textarea id="links" spellcheck="false" placeholder="https://www.youtube.com/watch?v=...\nhttps://youtu.be/..." aria-label="Video URLs"></textarea>
+          <textarea id="links" spellcheck="false" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..." aria-label="Video URLs"></textarea>
           <div class="input-footer"><span id="link-count">0 links ready</span><button class="button secondary" id="clear-btn">Clear</button></div>
         </div>
 
@@ -36,6 +36,7 @@
           <div class="setting-row"><span>Bitrate</span><strong>128 kbps</strong></div>
           <div class="setting-row"><span>Destination</span><strong>downloads/</strong></div>
           <button class="button primary" id="download-btn">Download all <span>↗</span></button>
+          <button class="button secondary" id="bridge-btn" type="button">Start local bridge</button>
           <p class="microcopy">Cloud conversion is enabled. Downloads use your device’s normal Downloads folder. A local bridge is optional for videos blocked by cloud authentication.</p>
         </div>
       </section>
@@ -46,8 +47,12 @@
       </section>
 
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
-      <footer><span>App by Satvik Bagewadi with Codex</span><span>Use only content you have permission to download.</span></footer>
+
+      <footer>
+        <span>App by Satvik Bagewadi with Codex</span>
+        <span>Use only content you have permission to download.</span>
+      </footer>
     </main>
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=5"></script>
   </body>
 </html>
